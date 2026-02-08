@@ -1,21 +1,18 @@
 from datetime import datetime, timedelta
 import ephem
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from telegram.ext import Application, CommandHandler, MessageHandler, filters
 from telegram import ReplyKeyboardMarkup
 import os
 
 TOKEN = os.environ["BOT_TOKEN"]
-FIXED_LAT = 45.0  # координаты Крыма (можно изменить)
+FIXED_LAT = 45.0
 FIXED_LON = 34.0
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 IMAGES_DIR = os.path.join(BASE_DIR, "images")
 
-# Словарь пользователей: chat_id -> данные
 users = {}
-# Словарь для хранения статистики пользователей
 user_stats = set()
 
-# Эмодзи для лунных дней
 lunar_emojis = {
     1: "🕯️", 2: "🌾", 3: "🐆", 4: "🌳", 5: "🦄", 6: "🦩",
     7: "🌬️", 8: "🔥", 9: "🦇", 10: "⛲", 11: "🗡️", 12: "❤️",
@@ -23,7 +20,7 @@ lunar_emojis = {
     19: "🕷️", 20: "🦅", 21: "🐎", 22: "🐘", 23: "🐊", 24: "🐻",
     25: "🐚", 26: "🐸", 27: "🪄", 28: "🌸", 29: "🐙", 30: "🦢"
 }
-# словарь с описанием лунных дней
+
 lunar_days = {
 1: "Символ дня Лампада — День замыслов и планирования.\n\n"
    "<b>Здоровье и питание:</b> организм может чувствовать усталость и нехватку сил. Избегайте алкоголя, тяжёлых тренировок и острой пищи. Лучше отдохнуть и сосредоточиться на восстановлении сил.\n\n"
@@ -82,7 +79,7 @@ lunar_days = {
 
 12: "Символ дня Сердце, чаша Грааля — День любви, мудрости и внутренней гармонии.\n\n"
     "<b>Здоровье и питание:</b> избегайте переедания и алкоголя, пейте много воды — она сейчас особенно полезна. Сегодня полезны очищающие процедуры и забота о дыхательных путях, а сердцу нужны умеренные нагрузки.\n\n"
-    "<b>Любовь и отношения:</b> день благоприятен для проявления доброты, мира и взаимопонимания. Избегайте ссор и выяснений, но крепкие пары могут даже заключать брак — такая связь имеет шанс быть прочной. Зачатие сегодня не рекомендуется из‑за возможной сложности для ребёнка. :contentReference[oaicite:0]{index=0}\n\n"
+    "<b>Любовь и отношения:</b> день благоприятен для проявления доброты, мира и взаимопонимания. Избегайте ссор и выяснений, но крепкие пары могут даже заключать брак — такая связь имеет шанс быть прочной.\n\n"
     "<b>Работа и творчество:</b> не лучший период для важных начинаний, финансовых решений или поездок. Лучше отложить крупные проекты и сосредоточиться на спокойной, пассивной деятельности, анализе и саморазвитии.",
 
 13: "Символ дня Колесо — День магии, восстановления и возвращения прошлого.\n\n"
@@ -176,49 +173,16 @@ lunar_days = {
     "<b>Работа и творчество:</b> благоприятный период для подведения итогов, получения вдохновения и планирования будущих проектов. Сегодня можете завершать старые дела и готовиться к новому циклу.",
 }
 
-# Пути к картинкам лунных дней
-lunar_images = {
-    1: "/home/Sashareiher/images/1.JPG",
-    2: "/home/Sashareiher/images/2.JPG",
-    3: "/home/Sashareiher/images/3.JPG",
-    4: "/home/Sashareiher/images/4.JPG",
-    5: "/home/Sashareiher/images/5.JPG",
-    6: "/home/Sashareiher/images/6.JPG",
-    7: "/home/Sashareiher/images/7.JPG",
-    8: "/home/Sashareiher/images/8.JPG",
-    9: "/home/Sashareiher/images/9.JPG",
-    10: "/home/Sashareiher/images/10.JPG",
-    11: "/home/Sashareiher/images/11.JPG",
-    12: "/home/Sashareiher/images/12.JPG",
-    13: "/home/Sashareiher/images/13.JPG",
-    14: "/home/Sashareiher/images/14.jpg",
-    15: "/home/Sashareiher/images/15.JPG",
-    16: "/home/Sashareiher/images/16.JPG",
-    17: "/home/Sashareiher/images/17.JPG",
-    18: "/home/Sashareiher/images/18.JPG",
-    19: "/home/Sashareiher/images/19.JPG",
-    20: "/home/Sashareiher/images/20.JPG",
-    21: "/home/Sashareiher/images/21.JPG",
-    22: "/home/Sashareiher/images/22.JPG",
-    23: "/home/Sashareiher/images/23.JPG",
-    24: "/home/Sashareiher/images/24.JPG",
-    25: "/home/Sashareiher/images/25.JPG",
-    26: "/home/Sashareiher/images/26.JPG",
-    27: "/home/Sashareiher/images/27.JPG",
-    28: "/home/Sashareiher/images/28.JPG",
-    29: "/home/Sashareiher/images/29.JPG",
-    30: "/home/Sashareiher/images/30.JPG",
-}
+lunar_images = {i: os.path.join(IMAGES_DIR, f"{i}.JPG") for i in range(1, 31)}
+lunar_images[14] = os.path.join(IMAGES_DIR, "14.jpg")
 
 def get_image_path(day):
-    folder = "/home/Sashareiher/images/"
     for ext in [".jpg", ".jpeg", ".JPG", ".JPEG", ".png"]:
-        path = os.path.join(folder, f"{day}{ext}")
+        path = os.path.join(IMAGES_DIR, f"{day}{ext}")
         if os.path.exists(path):
             return path
     return None
 
-# Функция расчета лунного дня по восходу Луны
 def lunar_day_times():
     obs = ephem.Observer()
     obs.lat = str(FIXED_LAT)
@@ -233,10 +197,8 @@ def lunar_day_times():
     except:
         return None, None, None
 
-    # последнее новолуние
     prev_new_moon = ephem.previous_new_moon(obs.date)
 
-    # считаем количество восходов Луны после новолуния
     test_obs = ephem.Observer()
     test_obs.lat = str(FIXED_LAT)
     test_obs.lon = str(FIXED_LON)
@@ -265,7 +227,6 @@ def lunar_day_times():
     return lunar_day_number, start_time, end_time
 
 
-
 def get_moon_phase():
     obs = ephem.Observer()
     obs.lat = str(FIXED_LAT)
@@ -273,9 +234,8 @@ def get_moon_phase():
     obs.date = datetime.utcnow()
 
     moon = ephem.Moon(obs)
-    phase_percent = moon.phase  # процент освещенности Луны
+    phase_percent = moon.phase
 
-    # Определяем фазу по проценту освещенности
     if phase_percent == 0:
         phase_name = "Новолуние 🌑"
     elif 0 < phase_percent < 50:
@@ -291,17 +251,16 @@ def get_moon_phase():
 
     return phase_name, phase_percent
 
-# ================= Команды бота =================
-def start(update, context):
+async def start(update, context):
     keyboard = [["Текущие лунные сутки"]]
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
-    update.message.reply_text(
+    await update.message.reply_text(
         "Привет! Нажми кнопку, чтобы узнать текущие лунные сутки.",
         reply_markup=reply_markup
     )
 
-def handle_message(update, context):
+async def handle_message(update, context):
     if update.message.text == "Текущие лунные сутки":
 
         lunar_day, start_time, end_time = lunar_day_times()
@@ -310,10 +269,7 @@ def handle_message(update, context):
         emoji = lunar_emojis.get(lunar_day, "")
         description = lunar_days.get(lunar_day, "")
 
-        image_path = f"/home/Sashareiher/images/{lunar_day}.JPG"
-        if not os.path.exists(image_path):
-            image_path = f"/home/Sashareiher/images/{lunar_day}.jpg"
-
+        image_path = get_image_path(lunar_day)
 
         caption = (
             f"<b>{lunar_day} лунный день</b>\n"
@@ -322,42 +278,41 @@ def handle_message(update, context):
             f"<b>Фаза Луны:</b> {phase_name} ({phase_percent:.1f}%)"
         )
 
-        if os.path.exists(image_path):
-            update.message.reply_photo(
-                photo=open(image_path, "rb"),
-                caption=caption,
-                parse_mode="HTML"
-            )
+        if image_path and os.path.exists(image_path):
+            with open(image_path, "rb") as photo_file:
+                await update.message.reply_photo(
+                    photo=photo_file,
+                    caption=caption,
+                    parse_mode="HTML"
+                )
         else:
-            update.message.reply_text(caption, parse_mode="HTML")
+            await update.message.reply_text(caption, parse_mode="HTML")
 
-        update.message.reply_text(
+        await update.message.reply_text(
             f"{emoji}{description}",
             parse_mode="HTML"
         )
 
 
-def stats(update, context):
-    update.message.reply_text(
+async def stats(update, context):
+    await update.message.reply_text(
         f"Всего пользователей, которые использовали бота: {len(user_stats)}"
     )
 
-def track_user(update, context):
+async def track_user(update, context):
     user_id = update.message.from_user.id
     user_stats.add(user_id)
 
 
-# ================= Запуск бота =================
 def main():
-    updater = Updater(TOKEN, use_context=True)
-    dp = updater.dispatcher
+    application = Application.builder().token(TOKEN).build()
 
-    dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(CommandHandler("stats", stats))
-    dp.add_handler(MessageHandler(Filters.text, handle_message))
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("stats", stats))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    updater.start_polling()
-    updater.idle()
+    print("Bot started polling...")
+    application.run_polling()
 
 if __name__ == "__main__":
     main()
