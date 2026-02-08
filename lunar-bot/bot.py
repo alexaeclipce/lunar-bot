@@ -178,40 +178,40 @@ lunar_days = {
 
 # Пути к картинкам лунных дней
 lunar_images = {
-    1: "/home/Sashareiher/images/1.JPG",
-    2: "/home/Sashareiher/images/2.JPG",
-    3: "/home/Sashareiher/images/3.JPG",
-    4: "/home/Sashareiher/images/4.JPG",
-    5: "/home/Sashareiher/images/5.JPG",
-    6: "/home/Sashareiher/images/6.JPG",
-    7: "/home/Sashareiher/images/7.JPG",
-    8: "/home/Sashareiher/images/8.JPG",
-    9: "/home/Sashareiher/images/9.JPG",
-    10: "/home/Sashareiher/images/10.JPG",
-    11: "/home/Sashareiher/images/11.JPG",
-    12: "/home/Sashareiher/images/12.JPG",
-    13: "/home/Sashareiher/images/13.JPG",
-    14: "/home/Sashareiher/images/14.jpg",
-    15: "/home/Sashareiher/images/15.JPG",
-    16: "/home/Sashareiher/images/16.JPG",
-    17: "/home/Sashareiher/images/17.JPG",
-    18: "/home/Sashareiher/images/18.JPG",
-    19: "/home/Sashareiher/images/19.JPG",
-    20: "/home/Sashareiher/images/20.JPG",
-    21: "/home/Sashareiher/images/21.JPG",
-    22: "/home/Sashareiher/images/22.JPG",
-    23: "/home/Sashareiher/images/23.JPG",
-    24: "/home/Sashareiher/images/24.JPG",
-    25: "/home/Sashareiher/images/25.JPG",
-    26: "/home/Sashareiher/images/26.JPG",
-    27: "/home/Sashareiher/images/27.JPG",
-    28: "/home/Sashareiher/images/28.JPG",
-    29: "/home/Sashareiher/images/29.JPG",
-    30: "/home/Sashareiher/images/30.JPG",
+    1: "images/1.JPG",
+    2: "images/2.JPG",
+    3: "images/3.JPG",
+    4: "images/4.JPG",
+    5: "images/5.JPG",
+    6: "images/6.JPG",
+    7: "images/7.JPG",
+    8: "images/8.JPG",
+    9: "images/9.JPG",
+    10: "images/10.JPG",
+    11: "images/11.JPG",
+    12: "images/12.JPG",
+    13: "images/13.JPG",
+    14: "images/14.jpg",
+    15: "images/15.JPG",
+    16: "images/16.JPG",
+    17: "images/17.JPG",
+    18: "images/18.JPG",
+    19: "images/19.JPG",
+    20: "images/20.JPG",
+    21: "images/21.JPG",
+    22: "images/22.JPG",
+    23: "images/23.JPG",
+    24: "images/24.JPG",
+    25: "images/25.JPG",
+    26: "images/26.JPG",
+    27: "images/27.JPG",
+    28: "images/28.JPG",
+    29: "images/29.JPG",
+    30: "images/30.JPG",
 }
 
 def get_image_path(day):
-    folder = "/home/Sashareiher/images/"
+    folder = "images/"
     for ext in [".jpg", ".jpeg", ".JPG", ".JPEG", ".png"]:
         path = os.path.join(folder, f"{day}{ext}")
         if os.path.exists(path):
@@ -310,9 +310,9 @@ def handle_message(update, context):
         emoji = lunar_emojis.get(lunar_day, "")
         description = lunar_days.get(lunar_day, "")
 
-        image_path = f"/home/Sashareiher/images/{lunar_day}.JPG"
+        image_path = f"images/{lunar_day}.JPG"
         if not os.path.exists(image_path):
-            image_path = f"/home/Sashareiher/images/{lunar_day}.jpg"
+            image_path = f"images/{lunar_day}.jpg"
 
 
         caption = (
