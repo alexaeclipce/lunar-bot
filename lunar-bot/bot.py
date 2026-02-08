@@ -4,7 +4,7 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 from telegram import ReplyKeyboardMarkup
 import os
 
-TOKEN = "8347641324:AAGEGPkiCrdJtw5mgLZt1aZB6_UN4Y5LV6g"
+TOKEN = os.environ["BOT_TOKEN"]
 FIXED_LAT = 45.0  # координаты Крыма (можно изменить)
 FIXED_LON = 34.0
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
